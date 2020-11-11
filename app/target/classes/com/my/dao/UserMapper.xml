@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.my.dao.IUserRepository">
+	<resultMap id="userMap" type="com.my.vo.UserVO">
+		<result property="userId" column="userid"/>
+		<result property="userPw" column="password"/>
+		<result property="userName" column="name"/>
+		<result property="userTel" column="tel"/>
+		<result property="userPic" column="picture"/>
+		<result property="pictureSize" column="picture_size"/>
+	</resultMap>
+	
+	<select id="getInfo" resultType="com.my.vo.UserVO" 
+		parameterType="String">
+		select userid as userId, 
+		password as userPw, 
+		name as userName,
+		tel as userTel,
+		picture as userPic,
+		picture_size as pictureSize 
+		from emp_users where userid=#{userId}
+	</select>
+	
+	<!-- <select id="getIdCheck" parameterType="String" resultType="boolean">
+		select * from emp_users where userid=#{userId}
+	</select> -->
+	<!-- * from 으로 다 가져오면 아이디 값만 들어온다 -->
+	<select id="getPassword" parameterType="String" resultType="String">
+		select password from emp_users where userid=#{userId}	
+	</select>
+	
+	<select id="getUserCheck" parameterType="String" resultType="int">
+	select count(userId) from emp_users where userId=#{userId}
+	</select>
+	
+	
+
+	<insert id="inserJoin" parameterType="com.my.vo.UserVO">
+		insert into emp_users values(#{userId}, #{userPw}, #{userName},#{userTel},
+		#{userPic},#{pictureSize})
+	</insert>
+</mapper>

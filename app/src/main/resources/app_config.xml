@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xsi:schemaLocation="http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-4.3.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+		http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+	<!-- 빈 관리 파일 -->
+	<!-- <bean id = "helloService" class="com.my.app.HelloService"/> <bean id 
+		= "helloService2" class="com.my.app.HelloService2"/> <bean id = "helloController" 
+		class="com.my.app.HelloController"> <constructor-arg ref="helloService2"/> 
+		</bean> -->
+	<context:component-scan
+		base-package="com.my.app" />
+	<context:component-scan
+		base-package="com.my.bye" />
+	<context:component-scan
+		base-package="com.my.dao" />
+	<context:component-scan
+		base-package="com.my.app.service" />
+	<!-- <aop:config> <aop:pointcut expression="execution(* com.my.app.HelloService.sayHello(..))" 
+		id="printTime"/> <aop:aspect ref="helloTime"> <aop:before pointcut-ref="printTime" 
+		method="timeLog"/> </aop:aspect> </aop:config> <aop:config> <aop:pointcut 
+		expression="execution(* com.my.bye.ByeController.sayBye(..))" id="printTime2"/> 
+		<aop:aspect ref="byeTime"> <aop:after pointcut-ref="printTime2" method="timeLog"/> 
+		</aop:aspect> </aop:config> <aop:config> <aop:pointcut expression="execution(* 
+		com.my.app.HelloController.sayHello(..))" id="printTime"/> <aop:aspect ref="timeTracer"> 
+		<aop:around pointcut-ref="printTime" method="trace"/> </aop:aspect> </aop:config> -->
+
+
+	<aop:aspectj-autoproxy /> <!-- 어노테이션 사용법 -->
+
+	<!-- <context:property-placeholder location="classpath:db/jdbc.properties"/> -->
+
+	<!-- JDBC 암호화 -->
+	<bean id="propertyConfigurer"
+		class="org.jasypt.spring31.properties.EncryptablePropertyPlaceholderConfigurer">
+		<constructor-arg ref="configurationEncryptor" />
+		<property name="locations">
+			<list>
+				<value>classpath:db/jdbc.properties</value>
+			</list>
+		</property>
+	</bean>
+	<bean id="configurationEncryptor"
+		class="org.jasypt.encryption.pbe.StandardPBEStringEncryptor">
+		<property name="config"
+			ref="environmentVariableConfiguration" />
+		<property name="password" value="1234" />
+	</bean>
+	<bean id="environmentVariableConfiguration"
+		class="org.jasypt.encryption.pbe.config.EnvironmentStringPBEConfig">
+		<property name="algorithm" value="PBEWithMD5AndDES" />
+		<property name="passwordEnvName"
+			value="APP_ENCRYPTION_PASSWORD" />
+	</bean>
+
+
+
+
+	<bean id="dataSource"
+		class="org.apache.commons.dbcp2.BasicDataSource">
+		<property name="driverClassName"
+			value="${jdbc.driverClassName}" />
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+	</bean>
+
+	<bean id="jdbcTemplate"
+		class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<tx:advice id="txAdvice"
+		transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="get*" read-only="true" />
+			<tx:method name="select*" read-only="true" />
+			<tx:method name="*" />
+		</tx:attributes>
+	</tx:advice>
+
+	<aop:config>
+		<aop:pointcut
+			expression="execution(* com..*Service.*teEmp(..))" id="txPointcut" />
+		<aop:advisor advice-ref="txAdvice"
+			pointcut-ref="txPointcut" />
+	</aop:config>
+
+	<bean id="sqlSessionFactory"
+		class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="mapperLocations"
+			value="classpath:/com/my/**/*.xml" />
+	</bean>
+	<mybatis-spring:scan base-package="com.my.dao" />
+
+	<bean id="bcryptPasswordEncoder"
+		class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" />
+
+	<bean id="messageSource"
+		class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="defaultEncoding" value="UTF-8" />
+		<property name="basenames">
+			<list>
+				<value>classpath:i18n/hr</value>
+			</list>
+		</property>
+	</bean>
+
+</beans>
